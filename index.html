@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a73e8" />
+  <meta name="description" content="تطبيق إدارة الدرجات الدراسية" />
+  <title>نظام الدرجات</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1558b0;
+      --secondary: #34a853;
+      --danger: #ea4335;
+      --warning: #fbbc04;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #202124;
+      --text-muted: #5f6368;
+      --border: #dadce0;
+      --shadow: 0 2px 8px rgba(0,0,0,0.12);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Cairo', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      direction: rtl;
+    }
+
+    /* Header */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    header .header-icons {
+      display: flex;
+      gap: 10px;
+    }
+
+    header button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    header button:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab:hover:not(.active) {
+      background: #f1f3f4;
+    }
+
+    /* Main Content */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border-top: 4px solid var(--primary);
+    }
+
+    .stat-card.success { border-top-color: var(--secondary); }
+    .stat-card.warning { border-top-color: var(--warning); }
+    .stat-card.danger  { border-top-color: var(--danger); }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .stat-card.success .stat-value { color: var(--secondary); }
+    .stat-card.warning .stat-value { color: #e37400; }
+    .stat-card.danger  .stat-value { color: var(--danger); }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      direction: rtl;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 500px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #f1f3f4;
+      padding: 12px 14px;
+      text-align: right;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: #f8f9fa; }
+
+    /* Grade Badge */
+    .grade-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .grade-a  { background: #e6f4ea; color: #1e7e34; }
+    .grade-b  { background: #e8f0fe; color: #1a73e8; }
+    .grade-c  { background: #fef7e0; color: #e37400; }
+    .grade-d  { background: #fce8e6; color: #c5221f; }
+    .grade-f  { background: #f5f5f5; color: #5f6368; }
+
+    /* Progress Bar */
+    .progress-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Subject List */
+    .subject-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .subject-item:last-child { border-bottom: none; }
+
+    .subject-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .subject-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .subject-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* GPA Display */
+    .gpa-display {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .gpa-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary) 0%, #e0e0e0 0%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      position: relative;
+    }
+
+    .gpa-inner {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gpa-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .gpa-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    /* Notification */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .notification.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .notification.success { background: var(--secondary); }
+    .notification.error   { background: var(--danger); }
+
+    /* Page visibility */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    /* Semester selector */
+    .semester-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .semester-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .semester-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Chart placeholder */
+    .chart-container {
+      position: relative;
+      height: 200px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 10px 0;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: var(--primary);
+      border-radius: 4px 4px 0 0;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      position: relative;
+      min-height: 4px;
+    }
+
+    .chart-bar:hover { opacity: 1; }
+
+    .chart-bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .chart-bar-value {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>📚 نظام الدرجات</h1>
+  <div class="header-icons">
+    <button onclick="exportData()">📤 تصدير</button>
+    <button onclick="importData()">📥 استيراد</button>
+  </div>
+</header>
+
+<!-- Navigation Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="showPage('dashboard', this)">🏠 الرئيسية</div>
+  <div class="tab" onclick="showPage('grades', this)">📝 الدرجات</div>
+  <div class="tab" onclick="showPage('subjects', this)">📖 المواد</div>
+  <div class="tab" onclick="showPage('gpa', this)">🎓 المعدل</div>
+  <div class="tab" onclick="showPage('settings', this)">⚙️ الإعدادات</div>
+</div>
+
+<!-- Main Content -->
+<main>
+
+  <!-- Dashboard Page -->
+  <div id="page-dashboard" class="page active">
+    <div class="stats-grid" id="stats-grid">
+      <!-- filled by JS -->
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 أداء المواد</div>
+      <div class="chart-container" id="chart-container">
+        <!-- filled by JS -->
+      </div>
+      <div style="height:28px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🕐 آخر الدرجات المضافة</div>
+      <div id="recent-grades">
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>لا توجد درجات بعد</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grades Page -->
+  <div id="page-grades" class="page">
+    <div class="card">
+      <div class="card-title">➕ إضافة درجة جديدة</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>المادة</label>
+          <select id="grade-subject">
+            <option value="">-- اختر المادة --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع التقييم</label>
+          <select id="grade-type">
+            <option value="quiz">اختبار قصير</option>
+            <option value="midterm">منتصف الفصل</option>
+            <option value="final">النهائي</option>
+            <option value="assignment">واجب</option>
+            <option value="project">مشروع</option>
+            <option value="participation">مشاركة</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>الدرجة المحصلة</label>
+          <input type="number" id="grade-score" placeholder="مثال: 85" min="0" max="100" />
+        </div>
+        <div class="form-group">
+          <label>الدرجة الكاملة</label>
+          <input type="number" id="grade-max" placeholder="مثال: 100" min="1" value="100" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>التاريخ</label>
+          <input type="date" id="grade-date" />
+        </div>
+        <div class="form-group">
+          <label>ملاحظات (اختياري)</label>
+          <input type="text" id="grade-notes" placeholder="أي ملاحظات..." />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addGrade()">✅ إضافة الدرجة</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 سجل الدرجات</div>
+      <div class="semester-bar" id="grade-semester-filter">
+        <div class="semester-chip active" data-sem="all" onclick="filterGrades('all', this)">الكل</div>
+      </div>
+      <div class="table-wrapper">
+        <table id="grades-table">
+          <thead>
+            <tr>
+              <th>المادة</th>
+              <th>النوع</th>
+              <th>الدرجة</th>
+              <th>النسبة</th>
+              <th>التقدير</th>
+              <th>التاريخ</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="grades-tbody">
+            <tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">لا توجد درجات مضافة</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subjects Page -->
+  <div id="page-subjects" class="page">
+    <div class="card">
+      <div class="card-title">➕ إضافة مادة جديدة</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>اسم المادة</label>
+          <input type="text" id="subject-name" placeholder="مثال: الرياضيات" />
+        </div>
+        <div class="form-group">
+          <label>الفصل الدراسي</label>
+          <select id="subject-semester">
+            <option value="الفصل الأول">الفصل الأول</option>
+            <option value="الفصل الثاني">الفصل الثاني</option>
+            <option value="الفصل الصيفي">الفصل الصيفي</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>عدد الساعات المعتمدة</label>
+          <input type="number" id="subject-credits" placeholder="مثال: 3" min="1" max="6" value="3" />
+        </div>
+        <div class="form-group">
+          <label>الدكتور / المعلم (اختياري)</label>
+          <input type="text" id="subject-teacher" placeholder="اسم المعلم" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addSubject()">✅ إضافة المادة</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📚 قائمة المواد</div>
+      <div id="subjects-list">
+        <div class="empty-state">
+          <div class="icon">📚</div>
+          <p>لا توجد مواد مضافة بعد</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GPA Page -->
+  <div id="page-gpa" class="page">
+    <div class="card">
+      <div class="card-title">🎓 المعدل التراكمي (GPA)</div>
+      <div class="gpa-display">
+        <div class="gpa-circle" id="gpa-circle">
+          <div class="gpa-inner">
+            <div class="gpa-value" id="gpa-value">--</div>
+            <div class="gpa-label">من 4.0</div>
+          </div>
+        </div>
+        <p id="gpa-description" style="color: var(--text-muted); font-size: 0.95rem;">أضف مواد ودرجات لحساب المعدل</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 تفاصيل المواد</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>المادة</th>
+              <th>الساعات</th>
+              <th>المتوسط %</th>
+              <th>التقدير</th>
+              <th>النقاط</th>
+            </tr>
+          </thead>
+          <tbody id="gpa-tbody">
+            <tr><td colspan="5" style="text-align:center;color:#999;padding:30px;">لا توجد بيانات</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 جدول التقديرات</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>النسبة</th><th>التقدير</th><th>النقاط</th><th>الوصف</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>95 - 100</td><td><span class="grade-badge grade-a">A+</span></td><td>4.0</td><td>ممتاز جداً</td></tr>
+            <tr><td>90 - 94</td><td><span class="grade-badge grade-a">A</span></td><td>4.0</td><td>ممتاز</td></tr>
+            <tr><td>85 - 89</td><td><span class="grade-badge grade-b">B+</span></td><td>3.5</td><td>جيد جداً</td></tr>
+            <tr><td>80 - 84</td><td><span class="grade-badge grade-b">B</span></td><td>3.0</td><td>جيد</td></tr>
+            <tr><td>75 - 79</td><td><span class="grade-badge grade-c">C+</span></td><td>2.5</td><td>مقبول جداً</td></tr>
+            <tr><td>70 - 74</td><td><span class="grade-badge grade-c">C</span></td><td>2.0</td><td>مقبول</td></tr>
+            <tr><td>65 - 69</td><td><span class="grade-badge grade-d">D+</span></td><td>1.5</td><td>ضعيف جداً</td></tr>
+            <tr><td>60 - 64</td><td><span class="grade-badge grade-d">D</span></td><td>1.0</td><td>ضعيف</td></tr>
+            <tr><td>أقل من 60</td><td><span class="grade-badge grade-f">F</span></td><td>0.0</td><td>راسب</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div id="page-settings" class="page">
+    <div class="card">
+      <div class="card-title">⚙️ إعدادات التطبيق</div>
+      <div class="form-group">
+        <label>اسم الطالب</label>
+        <input type="text" id="student-name" placeholder="أدخل اسمك" />
+      </div>
+      <div class="form-group">
+        <label>المرحلة الدراسية</label>
+        <select id="study-level">
+          <option value="ثانوي">ثانوي</option>
+          <option value="جامعي">جامعي</option>
+          <option value="دراسات عليا">دراسات عليا</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🗑️ إدارة البيانات</div>
+      <p style="color:var(--text-muted); margin-bottom:14px; font-size:0.9rem;">يمكنك تصدير بياناتك أو مسحها بالكامل</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="exportData()">📤 تصدير البيانات</button>
+        <button class="btn btn-outline" onclick="importData()">📥 استيراد البيانات</button>
+        <button class="btn btn-danger" onclick="clearAllData()">🗑️ مسح كل البيانات</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ℹ️ عن التطبيق</div>
+      <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.7;">
+        <strong>نظام الدرجات</strong> - تطبيق ويب تقدمي (PWA) لإدارة ومتابعة الدرجات الدراسية.<br/>
+        يعمل بدون إنترنت بعد التثبيت الأول.<br/>
+        جميع البيانات محفوظة محلياً على جهازك.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- Notification -->
+<div class="notification" id="notification"></div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-title" id="confirm-title">تأكيد</div>
+    <p id="confirm-message"></p>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-danger" id="confirm-btn">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)" />
+
+<script>
+// ===================== Data Store =====================
+let appData = {
+  subjects: [],
+  grades: [],
+  settings: { studentName: '', studyLevel: 'جامعي' }
+};
+
+// ===================== Init =====================
+function init() {
+  loadData();
+  setDefaultDate();
+  renderAll();
+  registerSW();
+}
+
+function loadData() {
+  const saved = localStorage.getItem('gradesApp');
+  if (saved) {
+    try { appData = JSON.parse(saved); } catch(e) {}
+  }
+}
+
+function saveData() {
+  localStorage.setItem('gradesApp', JSON.stringify(appData));
+}
+
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('grade-date').value = today;
+}
+
+// ===================== Navigation =====================
+function showPage(page, tabEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
+  renderAll();
+}
+
+// ===================== Subjects =====================
+function addSubject() {
+  const name = document.getElementById('subject-name').value.trim();
+  const semester = document.getElementById('subject-semester').value;
+  const credits = parseInt(document.getElementById('subject-credits').value) || 3;
+  const teacher = document.getElementById('subject-teacher').value.trim();
+
+  if (!name) { showNotification('الرجاء إدخال اسم المادة', 'error'); return; }
+  if (appData.subjects.find(s => s.name === name)) {
+    showNotification('هذه المادة موجودة بالفعل', 'error'); return;
+  }
+
+  appData.subjects.push({ id: Date.now(), name, semester, credits, teacher });
+  saveData();
+  renderAll();
+  document.getElementById('subject-name').value = '';
+  document.getElementById('subject-teacher').value = '';
+  showNotification('✅ تمت إضافة المادة بنجاح', 'success');
+}
+
+function deleteSubject(id) {
+  showConfirm('حذف المادة', 'هل تريد حذف هذه المادة وجميع درجاتها؟', () => {
+    appData.subjects = appData.subjects.filter(s => s.id !== id);
+    appData.grades = appData.grades.filter(g => g.subjectId !== id);
+    saveData();
+    renderAll();
+    showNotification('تم حذف المادة', 'success');
+  });
+}
+
+function renderSubjects() {
+  const list = document.getElementById('subjects-list');
+  if (!appData.subjects.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>لا توجد مواد مضافة بعد</p></div>';
+    return;
+  }
+
+  list.innerHTML = appData.subjects.map(s => {
+    const subjectGrades = appData.grades.filter(g => g.subjectId === s.id);
+    const avg = subjectGrades.length
+      ? (subjectGrades.reduce((a, g) => a + (g.score / g.max * 100), 0) / subjectGrades.length).toFixed(1)
+      : null;
+    return `
+      <div class="subject-item">
+        <div>
+          <div class="subject-name">${s.name}</div>
+          <div class="subject-meta">${s.semester} • ${s.credits} ساعات${s.teacher ? ' • ' + s.teacher : ''}</div>
+          ${avg !== null ? `
+            <div style="margin-top:6px;">
+              <span style="font-size:0.82rem;color:var(--text-muted);">المتوسط: ${avg}%</span>
+              <div class="progress-bar" style="width:150px;">
+                <div class="progress-fill" style="width:${avg}%;background:${getColor(avg)};"></div>
+              </div>
+            </div>` : ''}
+        </div>
+        <div class="subject-actions">
+          <button class="btn btn-outline btn-sm" onclick="deleteSubject(${s.id})">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ===================== Grades =====================
+function addGrade() {
+  const subjectId = parseInt(document.getElementById('grade-subject').value);
+  const type = document.getElementById('grade-type').value;
+  const score = parseFloat(document.getElementById('grade-score').value);
+  const max = parseFloat(document.getElementById('grade-max').value) || 100;
+  const date = document.getElementById('grade-date').value;
+  const notes = document.getElementById('grade-notes').value.trim();
+
+  if (!subjectId) { showNotification('الرجاء اختيار المادة', 'error'); return; }
+  if (isNaN(score) || score < 0) { showNotification('الرجاء إدخال درجة صحيحة', 'error'); return; }
+  if (score > max) { showNotification('الدرجة لا يمكن أن تتجاوز الدرجة الكاملة', 'error'); return; }
+
+  appData.grades.push({ id: Date.now(), subjectId, type, score, max, date, notes });
+  saveData();
+  renderAll();
+  document.getElementById('grade-score').value = '';
+  document.getElementById('grade-notes').value = '';
+  showNotification('✅ تمت إضافة الدرجة بنجاح', 'success');
+}
+
+function deleteGrade(id) {
+  appData.grades = appData.grades.filter(g => g.id !== id);
+  saveData();
+  renderAll();
+  showNotification('تم حذف الدرجة', 'success');
+}
+
+let currentFilter = 'all';
+
+function filterGrades(sem, el) {
+  currentFilter = sem;
+  document.querySelectorAll('.semester-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderGradesTable();
+}
+
+function renderGradesTable() {
+  const tbody = document.getElementById('grades-tbody');
+  let grades = [...appData.grades].reverse();
+
+  if (currentFilter !== 'all') {
+    const subIds = appData.subjects.filter(s => s.semester === currentFilter).map(s => s.id);
+    grades = grades.filter(g => subIds.includes(g.subjectId));
+  }
+
+  if (!grades.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">لا توجد درجات</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = grades.map(g => {
+    const subject = appData.subjects.find(s => s.id === g.subjectId);
+    const pct = (g.score / g.max * 100).toFixed(1);
+    const letter = getLetter(pct);
+    const cls = getLetterClass(letter);
+    const typeLabel = { quiz:'اختبار قصير', midterm:'منتصف الفصل', final:'النهائي', assignment:'واجب', project:'مشروع', participation:'مشاركة' }[g.type] || g.type;
+    return `<tr>
+      <td><strong>${subject ? subject.name : 'محذوفة'}</strong></td>
+      <td>${typeLabel}</td>
+      <td>${g.score} / ${g.max}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span>${pct}%</span>
+          <div class="progress-bar" style="width:60px;"><div class="progress-fill" style="width:${pct}%;background:${getColor(pct)};"></div></div>
+        </div>
+      </td>
+      <td><span class="grade-badge ${cls}">${letter}</span></td>
+      <td>${g.date || '-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteGrade(${g.id})">🗑️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSubjectSelect() {
+  const sel = document.getElementById('grade-subject');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">-- اختر المادة --</option>' +
+    appData.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  sel.value = val;
+}
+
+function renderSemesterFilter() {
+  const bar = document.getElementById('grade-semester-filter');
+  const semesters = [...new Set(appData.subjects.map(s => s.semester))];
+  bar.innerHTML = `<div class="semester-chip ${currentFilter==='all'?'active':''}" data-sem="all" onclick="filterGrades('all', this)">الكل</div>` +
+    semesters.map(sem => `<div class="semester-chip ${currentFilter===sem?'active':''}" data-sem="${sem}" onclick="filterGrades('${sem}', this)">${sem}</div>`).join('');
+}
+
+// ===================== GPA =====================
+function renderGPA() {
+  const tbody = document.getElementById('gpa-tbody');
+  const gpaVal = document.getElementById('gpa-value');
+  const gpaDesc = document.getElementById('gpa-description');
+  const gpaCircle = document.getElementById('gpa-circle');
+
+  if (!appData.subjects.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px;">لا توجد بيانات</td></tr>';
+    gpaVal.textContent = '--';
+    return;
+  }
+
+  let totalPoints = 0, totalCredits = 0;
+  const rows = appData.subjects.map(s => {
+    const grades = appData.grades.filter(g => g.subjectId === s.id);
+    if (!grades.length) return `<tr><td>${s.name}</td><td>${s.credits}</td><td>-</td><td>-</td><td>-</td></tr>`;
+    const avg = grades.reduce((a, g) => a + (g.score / g.max * 100), 0) / grades.length;
+    const letter = getLetter(avg);
+    const points = getPoints(avg);
+    totalPoints += points * s.credits;
+    totalCredits += s.credits;
+    return `<tr>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.credits}</td>
+      <td>${avg.toFixed(1)}%</td>
+      <td><span class="grade-badge ${getLetterClass(letter)}">${letter}</span></td>
+      <td>${points.toFixed(1)}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join('');
+
+  if (totalCredits > 0) {
+    const gpa = (totalPoints / totalCredits).toFixed(2);
+    gpaVal.textContent = gpa;
+    const pct = (parseFloat(gpa) / 4) * 100;
+    gpaCircle.style.background = `conic-gradient(${getColor(pct * 0.9)} ${pct * 3.6}deg, #e0e0e0 0deg)`;
+    gpaDesc.textContent = getGPADesc(parseFloat(gpa));
+  } else {
+    gpaVal.textContent = '--';
+    gpaDesc.textContent = 'أضف درجات للمواد لحساب المعدل';
+  }
+}
+
+// ===================== Dashboard =====================
+function renderDashboard() {
+  const grid = document.getElementById('stats-grid');
+  const total = appData.grades.length;
+  const passing = appData.grades.filter(g => (g.score / g.max * 100) >= 60).length;
+  const avg = total ? (appData.grades.reduce((a, g) => a + (g.score / g.max * 100), 0) / total).toFixed(1) : '--';
+  const subjects = appData.subjects.length;
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-value">${subjects}</div><div class="stat-label">المواد المسجلة</div></div>
+    <div class="stat-card success"><div class="stat-value">${total}</div><div class="stat-label">إجمالي الدرجات</div></div>
+    <div class="stat-card warning"><div class="stat-value">${avg}%</div><div class="stat-label">المتوسط العام</div></div>
+    <div class="stat-card ${passing < total ? 'danger' : 'success'}"><div class="stat-value">${passing}</div><div class="stat-label">درجات ناجحة</div></div>
+  `;
+
+  // Chart
+  const chart = document.getElementById('chart-container');
+  if (!appData.subjects.length) {
+    chart.innerHTML = '<div style="width:100%;text-align:center;color:#999;">لا توجد بيانات للرسم البياني</div>';
+  } else {
+    const maxH = 160;
+    chart.innerHTML = appData.subjects.map(s => {
+      const grades = appData.grades.filter(g => g.subjectId === s.id);
+      const avg = grades.length ? grades.reduce((a, g) => a + (g.score / g.max * 100), 0) / grades.length : 0;
+      const h = Math.max(4, (avg / 100) * maxH);
+      return `<div class="chart-bar" style="height:${h}px;background:${getColor(avg)};">
+        <span class="chart-bar-value">${avg ? avg.toFixed(0) + '%' : ''}</span>
+        <span class="chart-bar-label">${s.name.length > 6 ? s.name.substring(0,6)+'…' : s.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Recent grades
+  const recent = document.getElementById('recent-grades');
+  const last5 = [...appData.grades].reverse().slice(0, 5);
+  if (!last5.length) {
+    recent.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>لا توجد درجات بعد</p></div>';
+  } else {
+    recent.innerHTML = last5.map(g => {
+      const subject = appData.subjects.find(s => s.id === g.subjectId);
+      const pct = (g.score / g.max * 100).toFixed(1);
+      const letter = getLetter(pct);
+      return `<div class="subject-item">
+        <div>
+          <div class="subject-name">${subject ? subject.name : 'محذوفة'}</div>
+          <div class="subject-meta">${g.date || ''}</div>
+        </div>
+        <div style="text-align:left;">
+          <span class="grade-badge ${getLetterClass(letter)}">${letter}</span>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">${g.score}/${g.max}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ===================== Settings =====================
+function renderSettings() {
+  document.getElementById('student-name').value = appData.settings.studentName || '';
+  document.getElementById('study-level').value = appData.settings.studyLevel || 'جامعي';
+}
+
+function saveSettings() {
+  appData.settings.studentName = document.getElementById('student-name').value.trim();
+  appData.settings.studyLevel = document.getElementById('study-level').value;
+  saveData();
+  showNotification('✅ تم حفظ الإعدادات', 'success');
+}
+
+// ===================== Export / Import =====================
+function exportData() {
+  const json = JSON.stringify(appData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'grades_backup_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showNotification('✅ تم تصدير البيانات', 'success');
+}
+
+function importData() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.subjects && data.grades) {
+        appData = data;
+        saveData();
+        renderAll();
+        showNotification('✅ تم استيراد البيانات بنجاح', 'success');
+      } else {
+        showNotification('ملف غير صالح', 'error');
+      }
+    } catch(err) {
+      showNotification('خطأ في قراءة الملف', 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAllData() {
+  showConfirm('مسح البيانات', 'هل أنت متأكد من مسح جميع البيانات؟ لا يمكن التراجع عن هذا الإجراء.', () => {
+    appData = { subjects: [], grades: [], settings: appData.settings };
+    saveData();
+    renderAll();
+    showNotification('تم مسح البيانات', 'success');
+  });
+}
+
+// ===================== Helpers =====================
+function getLetter(pct) {
+  pct = parseFloat(pct);
+  if (pct >= 95) return 'A+';
+  if (pct >= 90) return 'A';
+  if (pct >= 85) return 'B+';
+  if (pct >= 80) return 'B';
+  if (pct >= 75) return 'C+';
+  if (pct >= 70) return 'C';
+  if (pct >= 65) return 'D+';
+  if (pct >= 60) return 'D';
+  return 'F';
+}
+
+function getPoints(pct) {
+  pct = parseFloat(pct);
+  if (pct >= 90) return 4.0;
+  if (pct >= 85) return 3.5;
+  if (pct >= 80) return 3.0;
+  if (pct >= 75) return 2.5;
+  if (pct >= 70) return 2.0;
+  if (pct >= 65) return 1.5;
+  if (pct >= 60) return 1.0;
+  return 0.0;
+}
+
+function getLetterClass(letter) {
+  if (letter.startsWith('A')) return 'grade-a';
+  if (letter.startsWith('B')) return 'grade-b';
+  if (letter.startsWith('C')) return 'grade-c';
+  if (letter.startsWith('D')) return 'grade-d';
+  return 'grade-f';
+}
+
+function getColor(pct) {
+  pct = parseFloat(pct);
+  if (pct >= 80) return '#34a853';
+  if (pct >= 65) return '#fbbc04';
+  return '#ea4335';
+}
+
+function getGPADesc(gpa) {
+  if (gpa >= 3.7) return '🌟 ممتاز - أداء رائع!';
+  if (gpa >= 3.0) return '👍 جيد جداً - استمر!';
+  if (gpa >= 2.0) return '📈 جيد - يمكنك التحسين';
+  if (gpa >= 1.0) return '⚠️ مقبول - تحتاج للمزيد من الجهد';
+  return '❌ ضعيف - يرجى مراجعة المرشد الأكاديمي';
+}
+
+// ===================== Render All =====================
+function renderAll() {
+  renderSubjectSelect();
+  renderSubjects();
+  renderSemesterFilter();
+  renderGradesTable();
+  renderGPA();
+  renderDashboard();
+  renderSettings();
+}
+
+// ===================== Notification =====================
+function showNotification(msg, type = '') {
+  const n = document.getElementById('notification');
+  n.textContent = msg;
+  n.className = 'notification ' + type + ' show';
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// ===================== Modal =====================
+let confirmCallback = null;
+
+function showConfirm(title, msg, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  confirmCallback = null;
+}
+
+document.getElementById('confirm-btn').onclick = function() {
+  if (confirmCallback) confirmCallback();
+  closeModal();
+};
+
+// ===================== Service Worker =====================
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  }
+}
+
+// ===================== Start =====================
+init();
+</script>
+</body>
+</html>
